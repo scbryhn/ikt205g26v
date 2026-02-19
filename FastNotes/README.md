@@ -1,21 +1,36 @@
 # FastNotes
 
-## Run locally (Windows / macOS / Linux)
+A mobile note-taking application built with Expo and React Native.
 
-Prerequisites:
+## Development Setup
 
-- Node.js (16+ recommended)
-- npm
-- Expo CLI (optional): `npm install -g expo-cli` (or use `npx expo`)
+### Prerequisites
 
-Install dependencies:
+- Node.js (v18 or higher)
+- npm or yarn
+- Expo CLI
+
+### Installation
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm start
+   ```
+
+## Building and Running the Project
+
+### Development Environment
+
+To run the project in development mode, use:
 
 ```bash
-npm install
+npm expo start
 ```
 
-Start Expo dev server:
-
-```bash
-npx expo start
-```
+Then scan the QR code with Expo Go app or press 'w' for web preview.
