@@ -1,4 +1,6 @@
 import NotesItem from "@/components/NoteItem";
+import { signInWithEmail, signUpWithEmail } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Note } from "@/types/note";
 import { getNotes, removeNotes } from "@/utils/asyncStorage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -9,6 +11,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 export default function Index() {
   const [notes, setNotes] = useState<Note[] | []>([]);
   const router = useRouter();
+  const { user, isLoggedIn, signOut } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -36,6 +39,27 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
+      {isLoggedIn && user ? (
+        <View style={styles.headerContainer}>
+          <Text style={styles.welcomeText}>Welcome, {user.email}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.signOutButton, pressed && styles.buttonPressed]}
+            onPress={signOut}
+          >
+            <Text style={styles.buttonText}>Sign Out</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.headerContainer}>
+          <Text style={styles.welcomeText}>Not logged in</Text>
+          <Pressable
+            style={({ pressed }) => [styles.signOutButton, pressed && styles.buttonPressed]}
+            onPress={() => signInWithEmail("test@example.com", "password123")}
+          >
+            <Text style={styles.buttonText}>Sign In</Text>
+          </Pressable>
+        </View>
+      )}
       {notes && notes.length > 0 ? (
         <View style={{ padding: 16, width: "100%" }}>
           <FlatList
@@ -70,6 +94,7 @@ export default function Index() {
       >
         <Text style={styles.plus}>+</Text>
       </Pressable>
+
     </View>
   );
 }
@@ -79,6 +104,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerContainer: {
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#f5f5f5",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  welcomeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+  },
+  signOutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#007AFF",
+    borderRadius: 6,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
   },
   fab: {
     position: "absolute",
