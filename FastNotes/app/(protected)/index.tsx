@@ -1,66 +1,47 @@
 import NotesItem from "@/components/NoteItem";
-import { signInWithEmail, signUpWithEmail } from "@/services/authService";
-import { useAuth } from "@/contexts/AuthContext";
 import type { Note } from "@/types/note";
-import { getNotes, removeNotes } from "@/utils/asyncStorage";
+import { getAllNotes } from "@/services/notesService";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   const [notes, setNotes] = useState<Note[] | []>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { user, isLoggedIn, signOut } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
-      async function loadNote() {
+      async function loadNotes() {
         try {
-          const stored = await getNotes();
-          setNotes(stored ?? []);
+          setLoading(true);
+          const { data, error } = await getAllNotes();
+          if (error) {
+            console.warn("Failed to load notes", error);
+            setNotes([]);
+          } else {
+            setNotes(data ?? []);
+          }
         } catch (e) {
-          console.warn("Failed to load note", e);
+          console.warn("Failed to load notes", e);
+          setNotes([]);
+        } finally {
+          setLoading(false);
         }
       }
 
-      loadNote();
+      loadNotes();
     }, []),
   );
 
-  const handleRemove = async () => {
-    try {
-      await removeNotes();
-      setNotes([]);
-    } catch (e) {
-      console.warn("Failed to remove notes", e);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {isLoggedIn && user ? (
-        <View style={styles.headerContainer}>
-          <Text style={styles.welcomeText}>Welcome, {user.email}</Text>
-          <Pressable
-            style={({ pressed }) => [styles.signOutButton, pressed && styles.buttonPressed]}
-            onPress={signOut}
-          >
-            <Text style={styles.buttonText}>Sign Out</Text>
-          </Pressable>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#007AFF" />
         </View>
-      ) : (
-        <View style={styles.headerContainer}>
-          <Text style={styles.welcomeText}>Not logged in</Text>
-          <Pressable
-            style={({ pressed }) => [styles.signOutButton, pressed && styles.buttonPressed]}
-            onPress={() => signInWithEmail("test@example.com", "password123")}
-          >
-            <Text style={styles.buttonText}>Sign In</Text>
-          </Pressable>
-        </View>
-      )}
-      {notes && notes.length > 0 ? (
+      ) : notes && notes.length > 0 ? (
         <View style={{ padding: 16, width: "100%" }}>
           <FlatList
             data={notes}
@@ -83,7 +64,7 @@ export default function Index() {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <Text>No note stored. Press + to add one.</Text>
+          <Text>No notes yet. Press + to add one.</Text>
         </View>
       )}
 
@@ -94,7 +75,6 @@ export default function Index() {
       >
         <Text style={styles.plus}>+</Text>
       </Pressable>
-
     </View>
   );
 }
