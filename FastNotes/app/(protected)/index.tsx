@@ -1,42 +1,47 @@
 import NotesItem from "@/components/NoteItem";
 import type { Note } from "@/types/note";
-import { getNotes, removeNotes } from "@/utils/asyncStorage";
+import { getAllNotes } from "@/services/notesService";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   const [notes, setNotes] = useState<Note[] | []>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
-      async function loadNote() {
+      async function loadNotes() {
         try {
-          const stored = await getNotes();
-          setNotes(stored ?? []);
+          setLoading(true);
+          const { data, error } = await getAllNotes();
+          if (error) {
+            console.warn("Failed to load notes", error);
+            setNotes([]);
+          } else {
+            setNotes(data ?? []);
+          }
         } catch (e) {
-          console.warn("Failed to load note", e);
+          console.warn("Failed to load notes", e);
+          setNotes([]);
+        } finally {
+          setLoading(false);
         }
       }
 
-      loadNote();
+      loadNotes();
     }, []),
   );
 
-  const handleRemove = async () => {
-    try {
-      await removeNotes();
-      setNotes([]);
-    } catch (e) {
-      console.warn("Failed to remove notes", e);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {notes && notes.length > 0 ? (
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      ) : notes && notes.length > 0 ? (
         <View style={{ padding: 16, width: "100%" }}>
           <FlatList
             data={notes}
@@ -59,7 +64,7 @@ export default function Index() {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <Text>No note stored. Press + to add one.</Text>
+          <Text>No notes yet. Press + to add one.</Text>
         </View>
       )}
 
@@ -79,6 +84,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerContainer: {
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#f5f5f5",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  welcomeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+  },
+  signOutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#007AFF",
+    borderRadius: 6,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
   },
   fab: {
     position: "absolute",

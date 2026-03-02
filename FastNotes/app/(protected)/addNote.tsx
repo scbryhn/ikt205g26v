@@ -1,5 +1,4 @@
-import type { Note } from "@/types/note";
-import { getNotes, storeNotes } from "@/utils/asyncStorage";
+import { createNote } from "@/services/notesService";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -18,22 +17,37 @@ export default function AddNote() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const save = async () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      title: title || "Untitled",
-      content: content || "",
-    };
+    // Validation: no empty fields
+    if (!title.trim() || !content.trim()) {
+      Alert.alert("Missing fields", "Both title and content are required.");
+      return;
+    }
 
     try {
-      const current = (await getNotes()) ?? [];
-      const updated = [...current, newNote];
-      await storeNotes(updated);
-      router.back();
+      setIsSaving(true);
+      const { error } = await createNote({
+        title: title.trim(),
+        text: content.trim(),
+      });
+
+      if (error) {
+        Alert.alert("Error", "Failed to save note. Please try again.");
+        console.warn("Failed to save note", error);
+        return;
+      }
+
+      // Success feedback
+      Alert.alert("Success", "Note saved successfully!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
     } catch (e) {
       console.warn("Failed to save note", e);
-      Alert.alert("Save failed", "Could not save the note.");
+      Alert.alert("Error", "Could not save the note.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -70,11 +84,14 @@ export default function AddNote() {
 
         <View style={styles.footer}>
           <Pressable
-            style={styles.save}
+            style={[styles.save, isSaving && styles.saveDisabled]}
             onPress={save}
+            disabled={isSaving}
             accessibilityLabel="Save"
           >
-            <Text style={styles.saveText}>Save</Text>
+            <Text style={styles.saveText}>
+              {isSaving ? "Saving..." : "Save"}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -108,6 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
+  },
+  saveDisabled: {
+    opacity: 0.6,
   },
   saveText: { color: "#fff", fontWeight: "600" },
   footer: { padding: 16, backgroundColor: "transparent" },
