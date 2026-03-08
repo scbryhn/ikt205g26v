@@ -40,7 +40,13 @@
         }
       ],
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FastNotes to access your camera to take photos for your notes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
