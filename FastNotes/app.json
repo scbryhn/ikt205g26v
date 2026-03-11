@@ -46,6 +46,13 @@
         {
           "cameraPermission": "Allow FastNotes to access your camera to take photos for your notes."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
       ]
     ],
     "experiments": {

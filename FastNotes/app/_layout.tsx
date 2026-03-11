@@ -3,8 +3,11 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 
 function RootLayoutNav() {
+    const { permissionGranted, expoPushToken } = useNotificationPermission();
+
   const router = useRouter();
   const segments = useSegments();
 
