@@ -1,3 +1,4 @@
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { createNote, uploadNoteImage } from "@/services/notesService";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -17,6 +18,26 @@ import {
 
 const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+
+function getReadableErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    const message = (error as { message: string }).message.trim();
+    if (message.length > 0) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
 
 function getExtensionFromUri(uri: string): string {
   const normalizedUri = uri.split("?")[0];
@@ -131,9 +152,13 @@ export default function AddNote() {
           await uploadNoteImage(photoUri);
 
         if (uploadError || !uploadData) {
+          const uploadMessage = getReadableErrorMessage(
+            uploadError,
+            "Could not upload image. Please try again.",
+          );
           Alert.alert(
             "Upload failed",
-            "Could not upload image. Please try again.",
+            uploadMessage,
           );
           console.warn("Failed to upload image", uploadError);
           return;
@@ -173,6 +198,7 @@ export default function AddNote() {
       keyboardVerticalOffset={80}
     >
       <View style={{ flex: 1 }}>
+        <LoadingSpinner visible={isSaving} message="Uploading image..." />
         <View style={styles.header}>
           <TextInput
             style={styles.title}

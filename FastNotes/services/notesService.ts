@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Note, NoteInsert, NoteUpdate } from "@/types/note";
+import * as FileSystem from "expo-file-system/legacy";
 
 const NOTES_TABLE = "Notes";
 const NOTE_IMAGES_BUCKET = "Note images";
@@ -44,15 +45,29 @@ export async function uploadNoteImage(imageUri: string): Promise<{
     const normalizedExtension = extension === "jpeg" ? "jpg" : extension;
     const filePath = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${normalizedExtension}`;
 
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
+    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const mimeTypes: Record<string, string> = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+    };
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(NOTE_IMAGES_BUCKET)
-      .upload(filePath, blob, {
+      .upload(filePath, bytes.buffer, {
         cacheControl: "3600",
         upsert: false,
-        contentType: blob.type || undefined,
+        contentType: mimeTypes[extension] ?? "image/jpeg",
       });
 
     if (uploadError || !uploadData) {
