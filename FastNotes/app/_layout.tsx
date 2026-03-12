@@ -2,9 +2,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 
+import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 import { supabase } from "@/lib/supabase";
 
 function RootLayoutNav() {
+  const { permissionGranted } = useNotificationPermission();
+
   const router = useRouter();
   const segments = useSegments();
 

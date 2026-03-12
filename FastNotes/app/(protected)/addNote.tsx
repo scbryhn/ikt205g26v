@@ -1,8 +1,12 @@
-import { createNote } from "@/services/notesService";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { sendLocalNoteNotification } from "@/hooks/useNotificationPermission";
+import { createNote, uploadNoteImage } from "@/services/notesService";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,11 +17,125 @@ import {
   View,
 } from "react-native";
 
+const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+
+function getReadableErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    const message = (error as { message: string }).message.trim();
+    if (message.length > 0) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
+
+function getExtensionFromUri(uri: string): string {
+  const normalizedUri = uri.split("?")[0];
+  const parts = normalizedUri.split(".");
+  if (parts.length < 2) {
+    return "";
+  }
+  return parts[parts.length - 1].toLowerCase();
+}
+
+function validateImageAsset(
+  asset: ImagePicker.ImagePickerAsset,
+): string | null {
+  const extension = getExtensionFromUri(asset.uri);
+
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    return "Unsupported format. Please use JPG, PNG, or WebP.";
+  }
+
+  if (
+    typeof asset.fileSize === "number" &&
+    asset.fileSize > MAX_IMAGE_SIZE_BYTES
+  ) {
+    return "Image is too large. Maximum size is 15MB.";
+  }
+
+  return null;
+}
+
 export default function AddNote() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Camera permission needed",
+        "Please allow camera access to take photos for your notes.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: false,
+      quality: 0.9,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const selectedAsset = result.assets[0];
+    const validationError = validateImageAsset(selectedAsset);
+    if (validationError) {
+      Alert.alert("Invalid image", validationError);
+      return;
+    }
+
+    setPhotoUri(selectedAsset.uri);
+  };
+
+  const pickFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Gallery permission needed",
+        "Please allow photo library access to choose images for your notes.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: false,
+      quality: 0.9,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const selectedAsset = result.assets[0];
+    const validationError = validateImageAsset(selectedAsset);
+    if (validationError) {
+      Alert.alert("Invalid image", validationError);
+      return;
+    }
+
+    setPhotoUri(selectedAsset.uri);
+  };
 
   const save = async () => {
     // Validation: no empty fields
@@ -28,9 +146,32 @@ export default function AddNote() {
 
     try {
       setIsSaving(true);
+
+      let imageUrl: string | null = null;
+      if (photoUri) {
+        const { data: uploadData, error: uploadError } =
+          await uploadNoteImage(photoUri);
+
+        if (uploadError || !uploadData) {
+          const uploadMessage = getReadableErrorMessage(
+            uploadError,
+            "Could not upload image. Please try again.",
+          );
+          Alert.alert(
+            "Upload failed",
+            uploadMessage,
+          );
+          console.warn("Failed to upload image", uploadError);
+          return;
+        }
+
+        imageUrl = uploadData.publicUrl;
+      }
+
       const { error } = await createNote({
         title: title.trim(),
         text: content.trim(),
+        image_url: imageUrl,
       });
 
       if (error) {
@@ -38,6 +179,8 @@ export default function AddNote() {
         console.warn("Failed to save note", error);
         return;
       }
+
+      await sendLocalNoteNotification(title.trim());
 
       // Success feedback
       Alert.alert("Success", "Note saved successfully!", [
@@ -58,6 +201,7 @@ export default function AddNote() {
       keyboardVerticalOffset={80}
     >
       <View style={{ flex: 1 }}>
+        <LoadingSpinner visible={isSaving} message="Uploading image..." />
         <View style={styles.header}>
           <TextInput
             style={styles.title}
@@ -72,6 +216,10 @@ export default function AddNote() {
           contentContainerStyle={{ padding: 16 }}
           keyboardShouldPersistTaps="handled"
         >
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+          ) : null}
+
           <TextInput
             style={styles.content}
             placeholder="Write your note..."
@@ -83,6 +231,22 @@ export default function AddNote() {
         </ScrollView>
 
         <View style={styles.footer}>
+          <Pressable
+            style={styles.takePhoto}
+            onPress={takePhoto}
+            accessibilityLabel="Take photo"
+          >
+            <Text style={styles.takePhotoText}>Take photo</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.pickPhoto}
+            onPress={pickFromGallery}
+            accessibilityLabel="Choose from gallery"
+          >
+            <Text style={styles.pickPhotoText}>Choose from gallery</Text>
+          </Pressable>
+
           <Pressable
             style={[styles.save, isSaving && styles.saveDisabled]}
             onPress={save}
@@ -125,6 +289,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
+  },
+  takePhoto: {
+    height: 44,
+    backgroundColor: "#E9F2FF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  takePhotoText: { color: "#0A63D8", fontWeight: "600" },
+  pickPhoto: {
+    height: 44,
+    backgroundColor: "#F2F4F7",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  pickPhotoText: { color: "#344054", fontWeight: "600" },
+  photoPreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: "#f3f3f3",
   },
   saveDisabled: {
     opacity: 0.6,

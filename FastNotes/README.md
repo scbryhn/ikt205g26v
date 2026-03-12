@@ -1,19 +1,22 @@
+GitHub link:
+
 Oppgave krav:
-Autentisering
-✓ (10%) Sign-up: Bruker kan opprette konto med e-post/passord
-✓ (10%) Email template: Endre templaten i supabase når bruker skal signe opp
-✓ (10%) Login/Logout: Brukeren skal logge inn før de har tilgang til å bruke appen
-✓ (5%) Credentials: En innlogget bruker skal kunne fortsette å være innlogget, men credentials må være kryptert
+Kamera-integrasjon
+✔ (5%) Permissions: Be om og håndtere tilgang til både kamera og enhetens bildegalleri.
+✔ (10%) Capture & Pick: Brukeren skal kunne velge mellom å ta et nytt bilde direkte i appen, eller velge et eksisterende fra galleriet.
+✔ (5%) Preview: Bildet skal vises til brukeren i notatvinduet ("staged") før brukeren bekrefter lagring/opplasting.
 
-Database
-✓ (5%) Auth-kobling: Bare innloggede brukere skal kunne gjøre noe med databasen
-✓ (10%) Create: Lagre et nytt notat, her skal feltene være Tittel, Tekst, Bruker som opprettet notatet, og tidspunkt den sist ble endret
-✓ (10%) Read: Notater vises på en skjerm kalt "Jobb Notater" hvor notatene fra alle brukerne vises
-✓ (10%) Update: Brukere skal kunne oppdatere et notat
-✓ (10%) Delete: Brukere kan slette et notat, med bekreftelse før det blir gjort
+Storage & Validering
+✔ (10%) Client-side Validation: Koden skal sjekke at filen er under 15MB og i formatene JPG, PNG eller WebP før opplastingen til Supabase starter.
+✔ (10%) Supabase Upload: Sikker opplasting av bildet til Supabase Storage (Bucket) med unike filnavn (for å unngå overskriving av andres bilder).
+✔ (5%) DB Linking: Lagre URL-en til det opplastede bildet i notat-tabellen, slik at det er knyttet til riktig notat.
 
-Validering
-Tomme felter: Det skal ikke være tomme felter når brukeren sender notater:
-✓ (5%) Ingen tomme felter i notater
-✓ (5%) Ingen tomme felter i brukernavn og passord
-✓ (5%) Success: Brukerne skal få en godkjenning på at operasjonene har blitt gjort
+UI/UX (Bilde & Feedback)
+✔ (10%) Loading States: Implementere en progress bar eller spinner som viser at bildeopplasting pågår, og deaktivere lagre-knappen underveis.
+✔ (10%) Aspect Ratio Handling: Bildene skal vises sammen med notatene i "Jobb Notater"-skjermen, og skal skalere pent (bildet skal ikke strekkes).
+✔ (10%) Error Messaging: Appen skal gi tydelige feilmeldinger til brukeren dersom bildet er for stort, feil format, eller hvis opplastingen feiler.
+
+Notifikasjoner
+✔ (5%) System Permissions: Be om tillatelse fra OS-et til å sende varsler/notifikasjoner til brukeren.
+✔ (5%) Lokal Trigger (Gir 5% av 15%): Appen sender et varsel kun til den som trykker "Lagre". Logikken kjøres i app-koden etter en vellykket supabase.insert.
+✔ (5%) Content Injection: Notifikasjonen skal inneholde tittelen på det nye notatet (f.eks. "Nytt notat: [Notatets tittel]").
