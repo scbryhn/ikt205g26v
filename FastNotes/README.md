@@ -18,7 +18,5 @@ UI/UX (Bilde & Feedback)
 
 Notifikasjoner
 ✔ (5%) System Permissions: Be om tillatelse fra OS-et til å sende varsler/notifikasjoner til brukeren.
-(15% totalt) Trigger Logic (Velg én av to løsninger):
-Lokal Trigger (Gir 5% av 15%): Appen sender et varsel kun til den som trykker "Lagre". Logikken kjøres i app-koden etter en vellykket supabase.insert.
-Skybasert/Edge Trigger (Full pott - 15% av 15%): Når en ansatt legger inn et notat, får alle andre ansatte et varsel. Dette løses via Supabase Webhooks og en Edge Function
-(5%) Content Injection: Notifikasjonen skal inneholde tittelen på det nye notatet (f.eks. "Nytt notat: [Notatets tittel]").
+✔ (5%) Lokal Trigger (Gir 5% av 15%): Appen sender et varsel kun til den som trykker "Lagre". Logikken kjøres i app-koden etter en vellykket supabase.insert.
+✔ (5%) Content Injection: Notifikasjonen skal inneholde tittelen på det nye notatet (f.eks. "Nytt notat: [Notatets tittel]").

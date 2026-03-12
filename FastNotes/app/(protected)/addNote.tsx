@@ -1,4 +1,5 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { sendLocalNoteNotification } from "@/hooks/useNotificationPermission";
 import { createNote, uploadNoteImage } from "@/services/notesService";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -178,6 +179,8 @@ export default function AddNote() {
         console.warn("Failed to save note", error);
         return;
       }
+
+      await sendLocalNoteNotification(title.trim());
 
       // Success feedback
       Alert.alert("Success", "Note saved successfully!", [
