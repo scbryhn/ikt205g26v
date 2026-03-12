@@ -1,8 +1,20 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { Alert } from "react-native";
 
+import { supabase } from "@/lib/supabase";
+
+// Controls how notifications behave when the app is in the foreground
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
 
 export const useNotificationPermission = () => {
     const [permissionGranted, setPermissionGranted] = useState<Notifications.PermissionStatus | null>(null);
@@ -37,6 +49,17 @@ export const useNotificationPermission = () => {
             const token = (await Notifications.getExpoPushTokenAsync()).data;
             setExpoPushToken(token);
             console.log("Expo Push Token:", token);
+
+                        // Save token to Supabase so the server can send push notifications to this device
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                            await supabase
+                                .from("push_tokens")
+                                .upsert(
+                                    { user_id: user.id, token },
+                                    { onConflict: "user_id" }
+                                );
+                        }
         }
 
         requestPermission();

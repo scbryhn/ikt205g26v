@@ -17,7 +17,7 @@ UI/UX (Bilde & Feedback)
 ✔ (10%) Error Messaging: Appen skal gi tydelige feilmeldinger til brukeren dersom bildet er for stort, feil format, eller hvis opplastingen feiler.
 
 Notifikasjoner
-(5%) System Permissions: Be om tillatelse fra OS-et til å sende varsler/notifikasjoner til brukeren.
+✔ (5%) System Permissions: Be om tillatelse fra OS-et til å sende varsler/notifikasjoner til brukeren.
 (15% totalt) Trigger Logic (Velg én av to løsninger):
 Lokal Trigger (Gir 5% av 15%): Appen sender et varsel kun til den som trykker "Lagre". Logikken kjøres i app-koden etter en vellykket supabase.insert.
 Skybasert/Edge Trigger (Full pott - 15% av 15%): Når en ansatt legger inn et notat, får alle andre ansatte et varsel. Dette løses via Supabase Webhooks og en Edge Function
